@@ -11,6 +11,17 @@ conceptList:
   - conceptName: jenkins
     usedVocabulary:
       - username
+  - conceptName: fake-concept
+    usedVocabulary:
+      - username
+      - no
+  - conceptName: fake-concept-2
+    usedVocabulary:
+      - fake-concept/username
+      - username
+  - conceptName: fake-concept-3
+    usedVocabulary:
+      - fake-concept-2/fake-concept/username
 customMappingList:
   - mappingName: struct
     description: mapping struct
@@ -19,33 +30,18 @@ customMappingList:
 #      - conceptName: jenkins
 #        usedVocabulary:
 #          - username
-#  - mappingName: jsonObject
-#    description: custom json object mapping example
-#    schema: "{myDataUser: %{username}, myAccessToken: %{accessToken}}"
-#    usedVocabulary:
-#      - username
-#      - accessToken
-#  - mappingName: jsonArray
-#    description: custom json array mapping example
-#    schema: "[%{username}, %{accessToken}]"
-#    usedVocabulary:
-#      - username
-#      - accessToken
-#  - mappingName: illegal-pattern-1
-#    description: fake mapping with illegal vocabulary
-#    schema: "{}"
-#    usedVocabulary:
-#      - username
-#      - error
-#  - mappingName: illegal-pattern-2
-#    description: fake mapping with illegal schema
-#    schema: "{error: }"
-#    usedVocabulary:
-#      - username
-#  - mappingName: Jenkins-info
-#    description: basic jenkins info, include username, accessToken and endpoint
-#    schema: "{name: %{username}, token: %{accessToken}, url: %{endpoint}}"
-#    usedVocabulary:
-#      - username
-#      - accessToken
-#      - endpoint
+  - mappingName: jsonObject
+    description: custom json object mapping example
+    schema: "{myDataUser: %{username}, myAccessToken: %{accessToken}}"
+  - mappingName: jsonArray
+    description: custom json array mapping example
+    schema: "[%{username}, %{accessToken}]"
+  - mappingName: illegal-pattern-1
+    description: fake mapping with illegal vocabulary
+    schema: "{}"
+  - mappingName: illegal-pattern-2
+    description: fake mapping with illegal schema
+    schema: "{error: }"
+  - mappingName: Jenkins-info
+    description: basic jenkins info, include username, accessToken and endpoint
+    schema: "{name: %{username}, token: %{accessToken}, url: %{endpoint}}"

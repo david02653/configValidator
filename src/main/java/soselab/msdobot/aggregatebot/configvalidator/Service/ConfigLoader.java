@@ -21,7 +21,6 @@ import soselab.msdobot.aggregatebot.configvalidator.Exception.IllegalConceptExce
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -35,7 +34,7 @@ public class ConfigLoader {
     private final YAMLFactory yamlFactory;
     private final ObjectMapper mapper;
     private YAMLParser parser;
-    private Gson gson;
+    private final Gson gson;
     private final String agentConfigPath;
     private final String serviceConfigPath;
     private final String capabilityConfigPath;
@@ -64,6 +63,7 @@ public class ConfigLoader {
         vocabularyConfigPath = env.getProperty("bot.config.vocabulary");
 
         loadVocabularyConfig();
+        verifyConceptVocabulary();
         verifyCustomMappingVocabulary();
         loadAgentConfig();
         loadCapabilityConfig();
@@ -121,6 +121,9 @@ public class ConfigLoader {
         System.out.println("---");
     }
 
+    /**
+     * verify upper intent config, illegal upper intent will be ignored
+     */
     private void verifyUpperIntent(){
         System.out.println("> start to verify upper intent config");
         Iterator<UpperIntent> intentIterator = upperIntentList.crossCapabilityList.iterator();
@@ -183,32 +186,6 @@ public class ConfigLoader {
     }
 
     /**
-     * generate a service list in hashmap form
-     * this map could be used as a quick lookup table when checking service level
-     */
-    public void generateServiceMap(){
-        HashMap<String, SubService> tempServiceMap = new HashMap<>();
-        SubService tempService;
-        for(ServiceSystem system: serviceList.serviceList){
-            tempService = new SubService(system.name, system.type, system.description, system.config);
-            tempServiceMap.put(system.name, tempService.overrideJenkinsConfig(null));
-            for(SubService service: system.getSubService()){
-                tempService.setName(service.name);
-                tempService.setType(service.type);
-                tempService.setDescription(service.description);
-                // override system jenkins config if service has individual config
-//                if(service.jenkinsConfig != null)
-//                    tempService.setJenkinsConfig(service.jenkinsConfig);
-                tempServiceMap.put(service.name, tempService.overrideJenkinsConfig(service.config));
-            }
-        }
-        serviceList.setServiceMap(tempServiceMap);
-        System.out.println("---");
-        System.out.println("> [DEBUG] complete service map " + gson.toJson(serviceList));
-        System.out.println("---");
-    }
-
-    /**
      * verify all listed vocabulary in capability specification file is legal
      */
     public void verifyCapabilityInputVocabulary(){
@@ -236,6 +213,28 @@ public class ConfigLoader {
     }
 
     /**
+     * verify all used vocabulary in each concept, all vocabulary are expected existing in general concept<br>
+     * illegal vocabulary usage will be ignored
+     */
+    public void verifyConceptVocabulary(){
+        System.out.println("> start to verify vocabulary used in concept");
+        for(Concept concept: vocabularyList.conceptList){
+            System.out.println("[DEBUG] checking concept '" + concept.conceptName + "'");
+            Iterator<String> iterator = concept.usedVocabulary.iterator();
+            while(iterator.hasNext()){
+                String vocabulary = iterator.next();
+                if(isVocabularyIllegal(vocabulary)){
+                    System.out.println("[WARNING] vocabulary '" + vocabulary + "' used in concept '" + concept.conceptName + "' does not exist in general concept or any other concept !");
+                    System.out.println("[WARNING] system will ignore this vocabulary from now on.");
+                    iterator.remove();
+                }
+            }
+        }
+        System.out.println(">>> " + gson.toJson(vocabularyList.conceptList));
+        System.out.println("---");
+    }
+
+    /**
      * verify if loaded vocabulary config file has illegal format and remove illegal entities
      */
     public void verifyCustomMappingVocabulary(){
@@ -252,13 +251,14 @@ public class ConfigLoader {
             ArrayList<String> verifyList = new ArrayList<>();
             while (vocabularyMatcher.find()){
                 String fullVocabulary = vocabularyMatcher.group(1);
-                resultSchema = resultSchema.replaceAll("%\\{" + fullVocabulary + "\\}", "\"" + fullVocabulary + "\"");
+                resultSchema = resultSchema.replaceAll("%\\{" + fullVocabulary + "}", "\"" + fullVocabulary + "\"");
                 System.out.println("[DEBUG] vocabulary '" + fullVocabulary + "' detected in custom mapping schema '" + mapping.mappingName + "'");
                 verifyList.add(fullVocabulary);
             }
             // check schema
             if(!isValidJsonString(resultSchema)){
-                System.out.println("[DEBUG] schema of mapping '" + mapping.mappingName + "' is not a json string.");
+                System.out.println("[WARNING] schema of mapping '" + mapping.mappingName + "' is not a json string.");
+                System.out.println("[WARNING] system will ignore mapping '" + mapping.mappingName + "' from now on.");
                 mappingsIterator.remove();
                 continue;
             }
@@ -285,7 +285,7 @@ public class ConfigLoader {
     private boolean isVocabularyIllegal(String input){
         if(input.contains("/")){
             String conceptType = input.split("/")[0];
-            String vocabulary = input.split("/")[1];
+            String vocabulary = input.split("/", 2)[1];
             try{
                 Concept concept = vocabularyList.getConcept(conceptType);
                 /* no matched vocabulary found in target concept */
