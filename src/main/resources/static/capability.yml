@@ -1,0 +1,103 @@
+availableCapabilityList:
+  - name: Jenkins-health
+    accessLevel: service
+    description: check job health status on jenkins server
+    method: POST
+    atomicIntent: ask_job_health_report
+    apiEndpoint: http://localhost:8888/capability/jenkins-health
+    input:
+      - username
+      - accessToken
+      - endpoint
+      - targetService
+    output:
+      type: json
+      jsonInfo:
+        - jsonPath: $[0].description
+          description: health summary
+        - jsonPath: $[1].description
+          description: build summary
+      # rendering: rendering-type
+  - name: Jenkins-test-report
+    accessLevel: service
+    description: check test report of specific job on jenkins server
+    method: POST
+    atomicIntent: ask_job_test_report
+    apiEndpoint: http://localhost:8888/capability/jenkins-testReport
+    input:
+      - username
+      - accessToken
+      - endpoint
+      - targetService
+    output:
+      type: json
+  - name: Jenkins-latest-build-number
+    accessLevel: service
+    description: get latest jenkins job build number
+    method: POST
+    atomicIntent: ask_jenkins_job_build_number
+    apiEndpoint: http://localhost:8888/capability/jenkins-buildNumber
+    input:
+      - username
+      - accessToken
+      - endpoint
+      - targetService
+    output:
+      type: plainText
+      storedData: buildNumber
+  - name: Jenkins-semi-test-report
+    accessLevel: service
+    description: get jenkins test report
+    method: POST
+    atomicIntent: ask_jenkins_semi_test_report
+    apiEndpoint: http://localhost:8888/capability/jenkins-testReport-semi
+    input:
+      - username
+      - accessToken
+      - endpoint
+      - targetService
+      - buildNumber
+    output:
+      type: plainText
+  - name: Jenkins-view-list
+    accessLevel: system
+    description: get jenkins view list
+    method: POST
+    atomicIntent: ask_job_view_list
+    apiEndpoint: http://localhost:8888/capability/jenkins-view-list
+    input:
+      - Jenkins-info
+    output:
+      type: plainText
+  - name: Fake-test-skill
+    accessLevel: service
+    description: try to use get method with request param
+    method: GET
+    atomicIntent: get_this
+    apiEndpoint: http://localhost:8888/capability/fake
+    input:
+      - username
+      - accessToken
+    output:
+      type: plaintext
+  - name: Fake-skill-pathvariable
+    accessLevel: service
+    description: try to use get method with path variable
+    method: GET
+    atomicIntent: get_path
+    apiEndpoint: http://localhost:8888/capability/fake-variable/{username}
+    input:
+      - username
+    output:
+      type: plainText
+  - name: illegal-skill
+    accessLevel: service
+    description: dummy illegal capability
+    method: POST
+    atomicIntent: none
+    apiEndpoint: url
+    input:
+      - fake-input
+      - username
+    output:
+      type: plainText
