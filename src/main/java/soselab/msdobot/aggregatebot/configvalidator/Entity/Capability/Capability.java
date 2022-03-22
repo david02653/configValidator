@@ -1,6 +1,7 @@
 package soselab.msdobot.aggregatebot.configvalidator.Entity.Capability;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 
@@ -19,6 +20,6 @@ public class Capability {
 
     @Override
     public String toString(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().setPrettyPrinting().create().toJson(this);
     }
 }

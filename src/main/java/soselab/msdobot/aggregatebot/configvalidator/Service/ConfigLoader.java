@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -55,7 +56,8 @@ public class ConfigLoader {
     public ConfigLoader(Environment env){
         yamlFactory = new YAMLFactory();
         mapper = new ObjectMapper();
-        gson = new Gson();
+//        gson = new Gson();
+        gson = new GsonBuilder().setPrettyPrinting().create();
         agentConfigPath = env.getProperty("bot.config.agent");
         serviceConfigPath = env.getProperty("bot.config.service");
         capabilityConfigPath = env.getProperty("bot.config.capability");

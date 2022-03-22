@@ -1,6 +1,7 @@
 package soselab.msdobot.aggregatebot.configvalidator.Entity.Service;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,7 +56,7 @@ public class ServiceList {
 
     @Override
     public String toString(){
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         return gson.toJson(serviceList);
     }
 }

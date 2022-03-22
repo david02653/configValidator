@@ -1,6 +1,7 @@
 package soselab.msdobot.aggregatebot.configvalidator.Entity.Vocabulary;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import soselab.msdobot.aggregatebot.configvalidator.Exception.IllegalConceptException;
 
 import java.util.ArrayList;
@@ -46,6 +47,6 @@ public class Vocabulary {
 
     @Override
     public String toString(){
-        return new Gson().toJson(this);
+        return new GsonBuilder().setPrettyPrinting().create().toJson(this);
     }
 }

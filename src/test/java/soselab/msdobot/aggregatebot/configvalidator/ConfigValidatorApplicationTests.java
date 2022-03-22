@@ -1,6 +1,7 @@
 package soselab.msdobot.aggregatebot.configvalidator;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.json.JSONArray;
@@ -20,15 +21,16 @@ class ConfigValidatorApplicationTests {
     }
 
     private boolean validJsonViaGson(String raw){
-        Gson gson = new Gson();
+//        Gson gson = new Gson();
+        Gson gson = new GsonBuilder().setPrettyPrinting().create();
         try{
 //            gson.fromJson(raw, JsonObject.class);
-            System.out.println(gson.fromJson(raw, JsonObject.class));
+            System.out.println(gson.toJson(gson.fromJson(raw, JsonObject.class)));
         }catch (Exception e){
             e.printStackTrace();
             try{
 //                gson.fromJson(raw, JsonArray.class);
-                System.out.println(gson.fromJson(raw, JsonArray.class));
+                System.out.println(gson.toJson(gson.fromJson(raw, JsonArray.class)));
             }catch (Exception ae){
                 ae.printStackTrace();
                 return false;
