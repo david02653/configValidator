@@ -1,4 +1,37 @@
 availableCapabilityList:
+  - name: record-analyze
+    accessLevel: service
+    description: analyze access record in specific time zone
+    method: POST
+    atomicIntent: check-record-time
+    apiEndpoint: http://check-record-time
+    input:
+      - accessRecord
+      - timeZone
+    output:
+      type: json
+      jsonInfo:
+        - jsonPath: $.status
+          description: access record
+    usedMappingList:
+      - mappingName: timeZone
+        description: target time zone
+        schema: "{start: %{startTime}, end: %{endTime}}"
+  - name: access-record
+    accessLevel: service
+    description: search user access record
+    method: POST
+    atomicIntent: check-user-access
+    apiEndpoint: http://check-user-access
+    input:
+      - username
+      - serviceName
+    output:
+      type: json
+      jsonInfo:
+        - jsonPath: $.record
+          storedData: accessRecord
+          description: access record
   - name: Jenkins-health
     accessLevel: service
     description: check job health status on jenkins server
@@ -101,3 +134,26 @@ availableCapabilityList:
       - username
     output:
       type: plainText
+#customMappingList:
+#  - mappingName: struct
+#    description: mapping struct
+#    schema: "{name: %{jenkins/username}, test: %{jenkins/not}}"
+##    usedConcept:
+##      - conceptName: jenkins
+##        usedVocabulary:
+##          - username
+#  - mappingName: jsonObject
+#    description: custom json object mapping example
+#    schema: "{myDataUser: %{username}, myAccessToken: %{accessToken}}"
+#  - mappingName: jsonArray
+#    description: custom json array mapping example
+#    schema: "[%{username}, %{accessToken}]"
+#  - mappingName: illegal-pattern-1
+#    description: fake mapping with illegal vocabulary
+#    schema: "{}"
+#  - mappingName: illegal-pattern-2
+#    description: fake mapping with illegal schema
+#    schema: "{error: }"
+#  - mappingName: Jenkins-info
+#    description: basic jenkins info, include username, accessToken and endpoint
+#    schema: "{name: %{username}, token: %{accessToken}, url: %{endpoint}}"
