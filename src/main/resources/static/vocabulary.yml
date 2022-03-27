@@ -14,6 +14,9 @@ contextList:
     schema: "{}"
   - contextName: Eureka
     schema: "{}"
+conceptList:
+  - conceptName: configRetrieve
+    schema: "{}"
 #conceptList:
 #  - conceptName: jenkins
 #    usedVocabulary:

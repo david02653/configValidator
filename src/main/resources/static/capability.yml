@@ -30,9 +30,16 @@ availableCapabilityList:
       type: json
       jsonInfo:
         - jsonPath: $.record
-          storedData: accessRecord
+          dataLabel: buildNumber
           description: access record
+    storedData:
+      input:
+        - lable: serviceName
+          concept: Api-serviceName
+      output:
+        - Api-buildNumber
   - name: Jenkins-health
+    context: jenkins
     accessLevel: service
     description: check job health status on jenkins server
     method: POST
