@@ -1,22 +1,62 @@
+ConceptList:
+  - conceptName: User
+    properties:
+      - username
+      - password
+  - conceptName: Time
+    properties:
+      - startTime
+      - endTime
+  - conceptName: Api
+    properties:
+      - endpoint
+      - serviceName
+      - buildNumber
+      - accessToken
+  - conceptName: AnalysisData
+    properties:
+      - healthData
+      - cohesion
+      - coupling
+      - accessRecord
+  - conceptName: Output
+    properties:
+      - json
+      - plainText
+ContextList:
+  - contextName: jenkins
+    properties:
+      - User-username
+      - User-password
+      - User-err
+  - contextName: eureka
+    properties:
+      - User-username
+      - User-password
+  - contextName: zuul
+    properties:
+      - User-username
+      - User-password
+# ----- previous format -----
 #general:
 #  - accessToken
 #  - username
 #  - endpoint
 #  - targetService
 #  - buildNumber
-output:
-  - plainText
-  - json
-contextList:
-  - contextName: general
-    schema: "{}"
-  - contextName: jenkins
-    schema: "{}"
-  - contextName: Eureka
-    schema: "{}"
-conceptList:
-  - conceptName: configRetrieve
-    schema: "{}"
+#output:
+#  - plainText
+#  - json
+#contextList:
+#  - contextName: general
+#    schema: "{}"
+#  - contextName: jenkins
+#    schema: "{}"
+#  - contextName: Eureka
+#    schema: "{}"
+#conceptList:
+#  - conceptName: configRetrieve
+#    schema: "{}"
 #conceptList:
 #  - conceptName: jenkins
 #    usedVocabulary:

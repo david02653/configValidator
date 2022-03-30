@@ -1,4 +1,4 @@
-package soselab.msdobot.aggregatebot.configvalidator.Entity.Vocabulary;
+package soselab.msdobot.aggregatebot.configvalidator.Entity.Capability;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;

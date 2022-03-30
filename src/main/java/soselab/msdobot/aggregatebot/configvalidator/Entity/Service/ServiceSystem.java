@@ -6,7 +6,7 @@ public class ServiceSystem {
     public String name;
     public String type;
     public String description;
-    public Config config;
+    public ArrayList<ServiceConfig> config;
     public ArrayList<SubService> subService;
 
     public ServiceSystem(){}
