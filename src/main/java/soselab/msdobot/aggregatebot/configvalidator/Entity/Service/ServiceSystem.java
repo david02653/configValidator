@@ -7,15 +7,16 @@ public class ServiceSystem {
     public String type;
     public String description;
     public ArrayList<ServiceConfig> config;
-    public ArrayList<SubService> subService;
+    // todo: subService -> Service
+    public ArrayList<Service> service;
 
     public ServiceSystem(){}
 
     public int subSystemCount(){
-        return subService.size();
+        return service.size();
     }
 
-    public ArrayList<SubService> getSubService(){
-        return this.subService;
+    public ArrayList<Service> getSubService(){
+        return this.service;
     }
 }

@@ -10,7 +10,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Service;
 
 import soselab.msdobot.aggregatebot.configvalidator.Entity.Agent.AgentList;
 import soselab.msdobot.aggregatebot.configvalidator.Entity.Capability.*;
@@ -30,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * load config files
  */
-@Service
+@org.springframework.stereotype.Service
 public class ConfigLoader {
 
     private final YAMLFactory yamlFactory;
@@ -325,7 +324,7 @@ public class ConfigLoader {
             }
             /* check service config */
             System.out.println("[DEBUG] start checking subService settings of system '" + system.name + "'");
-            for(SubService service: system.subService){
+            for(Service service: system.service){
                 System.out.println("[DEBUG] start checking service '" + service.name + "'");
                 // context
                 if(service.config != null){

@@ -6,10 +6,12 @@
   atomicIntent: check-record-time
   apiEndpoint: http://check-record-time
   input:
+    # AnalysisData.accessTRecord
     - AnalysisData-accessRecord
     - timeZone
   output:
     type: json
+    # type: aggregate
     jsonInfo:
       - jsonPath: $.status
         description: access record

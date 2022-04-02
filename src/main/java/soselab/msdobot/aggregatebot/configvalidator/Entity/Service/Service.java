@@ -3,15 +3,15 @@ package soselab.msdobot.aggregatebot.configvalidator.Entity.Service;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class SubService {
+public class Service {
     public String name;
     public String type;
     public String description;
     public ArrayList<ServiceConfig> config;
     public HashMap<String, String> configMap;
 
-    public SubService(){}
-    public SubService(String serviceName, String type, String description, ArrayList<ServiceConfig> config){
+    public Service(){}
+    public Service(String serviceName, String type, String description, ArrayList<ServiceConfig> config){
         this.name = serviceName;
         this.type = type;
         this.description = description;
