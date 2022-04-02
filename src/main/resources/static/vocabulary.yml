@@ -26,17 +26,17 @@ ConceptList:
 ContextList:
   - contextName: jenkins
     properties:
-      - User-username
-      - User-password
-      - User-err
+      - User.username
+      - User.password
+      - User.err
   - contextName: eureka
     properties:
-      - User-username
-      - User-password
+      - User.username
+      - User.password
   - contextName: zuul
     properties:
-      - User-username
-      - User-password
+      - User.username
+      - User.password
 # ----- previous format -----
 #general:
 #  - accessToken

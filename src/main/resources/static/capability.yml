@@ -7,7 +7,7 @@
   apiEndpoint: http://check-record-time
   input:
     # AnalysisData.accessTRecord
-    - AnalysisData-accessRecord
+    - AnalysisData.accessRecord
     - timeZone
   output:
     type: json
@@ -18,7 +18,7 @@
   usedMappingList:
     - mappingName: timeZone
       description: target time zone
-      schema: "{start: %{Time-startTime}, end: %{Time-endTime}}"
+      schema: "{start: %{Time.startTime}, end: %{Time.endTime}}"
 - name: access-record
   context: general
   accessLevel: service
@@ -27,8 +27,8 @@
   atomicIntent: check-user-access
   apiEndpoint: http://check-user-access
   input:
-    - User-username
-    - Api-serviceName
+    - User.username
+    - Api.serviceName
   output:
     type: json
     jsonInfo:
@@ -37,11 +37,11 @@
         description: access record
   storedData:
     input:
-      - label: Api-serviceName
-        concept: Api-serviceName
+      - label: Api.serviceName
+        concept: Api.serviceName
     output:
       - label: accessRecord
-        concept: AnalysisData-accessRecord
+        concept: AnalysisData.accessRecord
 - name: Jenkins-health
   context: jenkins
   accessLevel: service
@@ -50,10 +50,10 @@
   atomicIntent: ask_job_health_report
   apiEndpoint: http://localhost:8888/capability/jenkins-health
   input:
-    - User-username
-    - Api-accessToken
-    - Api-endpoint
-    - Api-targetService
+    - User.username
+    - Api.accessToken
+    - Api.endpoint
+    - Api.targetService
   output:
     type: json
     jsonInfo:
@@ -69,20 +69,20 @@
   atomicIntent: ask_job_test_report
   apiEndpoint: http://localhost:8888/capability/jenkins-testReport
   input:
-    - User-username
-    - Api-accessToken
-    - Api-endpoint
-    - Api-serviceName
+    - User.username
+    - Api.accessToken
+    - Api.endpoint
+    - Api.serviceName
   output:
     type: json
   storedData:
     input:
-      - label: User-username
-        concept: User-username
-      - label: Api-accessToken
-        concept: Api-username
-      - label: Api-serviceName
-        concept: Api-serviceName
+      - label: User.username
+        concept: User.username
+      - label: Api.accessToken
+        concept: Api.username
+      - label: Api.serviceName
+        concept: Api.serviceName
 - name: Jenkins-latest-build-number
   context: jenkins
   accessLevel: service
@@ -91,24 +91,24 @@
   atomicIntent: ask_jenkins_job_build_number
   apiEndpoint: http://localhost:8888/capability/jenkins-buildNumber
   input:
-    - User-username
-    - Api-accessToken
-    - Api-endpoint
-    - Api-serviceName
+    - User.username
+    - Api.accessToken
+    - Api.endpoint
+    - Api.serviceName
   output:
     type: plainText
     dataLabel: buildNumber
   storedData:
     input:
-      - label: User-username
-        concept: User-username
-      - label: Api-accessToken
-        concept: Api-accessToken
-      - label: Api-serviceName
-        concept: Api-serviceName
+      - label: User.username
+        concept: User.username
+      - label: Api.accessToken
+        concept: Api.accessToken
+      - label: Api.serviceName
+        concept: Api.serviceName
     output:
       - label: buildNumber
-        concept: Api-buildNumber
+        concept: Api.buildNumber
 - name: Jenkins-semi-test-report
   context: jenkins
   accessLevel: service
@@ -117,21 +117,21 @@
   atomicIntent: ask_jenkins_semi_test_report
   apiEndpoint: http://localhost:8888/capability/jenkins-testReport-semi
   input:
-    - User-username
-    - Api-accessToken
-    - Api-endpoint
-    - Api-serviceName
-    - Api-buildNumber
+    - User.username
+    - Api.accessToken
+    - Api.endpoint
+    - Api.serviceName
+    - Api.buildNumber
   output:
     type: plainText
   storedData:
     input:
-      - label: User-username
-        concept: User-username
-      - label: Api-accessToken
-        concept: Api-accessToken
-      - label: Api-serviceName
-        concept: Api-serviceName
+      - label: User.username
+        concept: User.username
+      - label: Api.accessToken
+        concept: Api.accessToken
+      - label: Api.serviceName
+        concept: Api.serviceName
 - name: Jenkins-view-list
   context: jenkins
   accessLevel: system
@@ -155,8 +155,8 @@
   atomicIntent: get_this
   apiEndpoint: http://localhost:8888/capability/fake
   input:
-    - User-username
-    - Api-accessToken
+    - User.username
+    - Api.accessToken
   output:
     type: plainText
 - name: Fake-capability-pathvariable
@@ -178,8 +178,8 @@
   atomicIntent: none
   apiEndpoint: url
   input:
-    - fake-input
-    - User-name
+    - fake.input
+    - User.name
   output:
     type: plainText
   #availableCapabilityList:

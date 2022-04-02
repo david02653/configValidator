@@ -12,15 +12,15 @@ serviceList:
       # this endpoint is one of the parameter, used by SKILL, not requesting skill
       - context: jenkins
         properties:
-          - name: Api-endpoint
+          - name: Api.endpoint
             value: http://soselab.asuscomm.com:10000
-          - name: User-username
+          - name: User.username
             value: linux
-          - name: Api-accessToken
+          - name: Api.accessToken
             value: 11eb26ac2812dda2527594fc7a423a98fd
       - context: eureka
         properties:
-          - name: User-username
+          - name: User.username
             value: name
 #      jenkins-endpoint: http://soselab.asuscomm.com:10000
 #      jenkins-username: linux
@@ -32,11 +32,11 @@ serviceList:
         config:
           - context: jenkins
             properties:
-              - name: Api-endpoint
+              - name: Api.endpoint
                 value: http://soselab.asuscomm.com:10000
-              - name: User-username
+              - name: User.username
                 value: linux
-              - name: Api-accessToken
+              - name: Api.accessToken
                 value: 11eb26ac2812dda2527594fc7a423a98fd
 #          endpoint: http://soselab.asuscomm.com:10000
 #          username: linux
@@ -53,11 +53,11 @@ serviceList:
     config:
       - context: general
         properties:
-          - name: Api-endpoint
+          - name: Api.endpoint
             value: url
-          - name: User-username
+          - name: User.username
             value: me
-          - name: Api-accessToken
+          - name: Api.accessToken
             value: toKen
 #      endpoint: url
 #      username: me
@@ -69,7 +69,7 @@ serviceList:
         config:
           - context: general
             properties:
-              - name: User-username
+              - name: User.username
                 value: fake one
 #          username: fake one
       - name: FakeTwo
@@ -78,6 +78,6 @@ serviceList:
         config:
           - context: general
             properties:
-              - name: User-username
+              - name: User.username
                 value: fake two
 #          username: fake two

@@ -353,11 +353,11 @@ public class ConfigLoader {
      */
     public ArrayList<String> getLegalCustomMapping(ArrayList<CustomMapping> mappingList) throws IllegalConceptException {
         ArrayList<String> legalMappingList = new ArrayList<>();
-        Pattern propertyPattern = Pattern.compile("%\\{([a-zA-Z0-9-/]+)}");
+        Pattern propertyPattern = Pattern.compile("%\\{([a-zA-Z0-9-/.]+)}");
         Matcher propertyMatcher;
         for(CustomMapping mapping: mappingList){
             // check schema
-            if(!isValidJsonString(mapping.schema.replaceAll("%\\{[a-zA-Z0-9-/]+}", "\"test\""))) {
+            if(!isValidJsonString(mapping.schema.replaceAll("%\\{[a-zA-Z0-9-/.]+}", "\"test\""))) {
                 System.out.println("[WARNING] given schema is not a legal json string.");
                 throw new IllegalConceptException("illegal schema format");
             }
@@ -461,9 +461,10 @@ public class ConfigLoader {
      * @return true if illegal, otherwise false
      */
     private boolean isPropertyIllegal(String property){
-        if(!property.contains("-"))
+        if(!property.contains("."))
             return true;
-        String[] token = property.split("-", 2);
+//        String[] token = property.split("-", 2);
+        String[] token = property.split("\\.", 2);
         String conceptName = token[0];
         String value = token[1];
         return vocabularyList.isIllegalConceptProperty(conceptName, value);
@@ -499,8 +500,8 @@ public class ConfigLoader {
      * @return true if illegal, otherwise false
      */
     private boolean isPropertyIllegal(String property, ArrayList<String> exceptionList){
-        if(property.contains("-")){
-            String[] token = property.split("-", 2);
+        if(property.contains(".")){
+            String[] token = property.split("\\.", 2);
             String conceptName = token[0];
             String value = token[1];
             return vocabularyList.isIllegalConceptProperty(conceptName, value);
