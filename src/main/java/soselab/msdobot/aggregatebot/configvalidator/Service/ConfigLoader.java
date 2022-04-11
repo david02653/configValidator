@@ -137,6 +137,7 @@ public class ConfigLoader {
             System.out.println("[DEBUG] checking upper intent '" + currentIntent.name + "'");
             for(Capability step: currentIntent.sequencedCapabilityList){
                 if(capabilityList.stream().noneMatch(capability -> capability.name.equals(step.name))){
+                    System.out.println("[Error] Error code: U01");
                     System.out.println("[WARNING] capability '" + step.name + "' at order " + step.order + " from upper intent '" + currentIntent.name + "' is not available !");
                     System.out.println("[WARNING] system will ignore upperIntent '" + currentIntent.name + "' from now on.");
                     intentIterator.remove();
@@ -201,6 +202,9 @@ public class ConfigLoader {
             /* check context */
             String context = currentCapability.context;
             if(!vocabularyList.isAvailableContext(context)){
+                System.out.println("[Error] Error code: C01");
+                System.out.println("[WARNING] context '" + context + "' found in capability '" + currentCapability.name + "' is illegal");
+                System.out.println("[WARNING] this capability will be ignored by system from now on.");
                 capabilityIterator.remove();
                 continue;
             }
@@ -227,6 +231,7 @@ public class ConfigLoader {
             try{
                 outputStoredDataLabelList = getOutputStoredDataList(currentCapability.output);
             }catch (IllegalConceptException ic){
+                System.out.println("[Error] Error code: C05");
                 System.out.println("[WARNING] verification failed when processing output config, this capability will be ignored from now on.");
                 capabilityIterator.remove();
                 continue;
@@ -272,11 +277,13 @@ public class ConfigLoader {
     private boolean isStoredDataInputLegal(ArrayList<DataLabel> dataLabelList, ArrayList<String> inputList){
         for(DataLabel dataSet: dataLabelList){
             if(isPropertyIllegal(dataSet.to)) {
-                System.out.println("[WARNING] concept '" + dataSet.to + "' found in storedData input is illegal.");
+                System.out.println("[Error] Error code: C06");
+                System.out.println("[WARNING] data destination '" + dataSet.to + "' found in storedData input is illegal.");
                 return false;
             }
             if(!inputList.contains(dataSet.from)){
-                System.out.println("[WARNING] label '" + dataSet.from + "' found in storedData input is illegal.");
+                System.out.println("[Error] Error code: C07");
+                System.out.println("[WARNING] data source '" + dataSet.from + "' found in storedData input is illegal.");
                 return false;
             }
         }
@@ -288,11 +295,13 @@ public class ConfigLoader {
             return true;
         for(DataLabel dataSet: dataLabels){
             if(isPropertyIllegal(dataSet.to)){
-                System.out.println("[WARNING] concept '" + dataSet.to + "' found in storedData output is illegal.");
+                System.out.println("[Error] Error code: C08");
+                System.out.println("[WARNING] data destination '" + dataSet.to + "' found in storedData output is illegal.");
                 return false;
             }
             if(!outputDataLabelList.contains(dataSet.from)){
-                System.out.println("[WARNING] label '" + dataSet.from + "' found in storedData output is illegal.");
+                System.out.println("[Error] Error code: C09");
+                System.out.println("[WARNING] data source '" + dataSet.from + "' found in storedData output is illegal.");
                 return false;
             }
         }
@@ -310,6 +319,7 @@ public class ConfigLoader {
             // context
             if(system.config != null){
                 if(system.config.removeIf(config -> !vocabularyList.isAvailableContext(config.context))) {
+                    System.out.println("[Error] Error code: S01");
                     System.out.println("[WARNING] illegal context found in system '" + system.name + "'.");
                     System.out.println("[WARNING] this context config setting will be ignored by system from now on.");
                 }
@@ -317,6 +327,7 @@ public class ConfigLoader {
                 for(ServiceConfig serviceConfig: system.config){
                     System.out.println("[DEBUG] checking system config setting of context '" + serviceConfig.context + "'");
                     if(serviceConfig.properties.removeIf(config -> isPropertyIllegal(config.name))){
+                        System.out.println("[Error] Error code: S02");
                         System.out.println("[WARNING] illegal property found in context '" + serviceConfig.context + "' config.");
                         System.out.println("[WARNING] illegal property config will be ignored by system from now on.");
                     }
@@ -329,12 +340,14 @@ public class ConfigLoader {
                 // context
                 if(service.config != null){
                     if(service.config.removeIf(config -> !vocabularyList.isAvailableContext(config.context))){
+                        System.out.println("[Error] Error code: S03");
                         System.out.println("[WARNING] illegal context found in service '" + service.name + "'.");
                         System.out.println("[WARNING] this context config setting will be ignored by system from now on.");
                     }
                     // context property
                     for(ServiceConfig serviceConfig: service.config){
                         if(serviceConfig.properties.removeIf(config -> isPropertyIllegal(config.name))){
+                            System.out.println("[Error] Error code: S04");
                             System.out.println("[WARNING] illegal property found in context '" + serviceConfig.context + "' config.");
                             System.out.println("[WARNING] illegal property config will be ignored by system from now on.");
                         }
@@ -358,6 +371,7 @@ public class ConfigLoader {
         for(CustomMapping mapping: mappingList){
             // check schema
             if(!isValidJsonString(mapping.schema.replaceAll("%\\{[a-zA-Z0-9-/.]+}", "\"test\""))) {
+                System.out.println("[Error] Error code: C02");
                 System.out.println("[WARNING] given schema is not a legal json string.");
                 throw new IllegalConceptException("illegal schema format");
             }
@@ -366,6 +380,7 @@ public class ConfigLoader {
                 String property = propertyMatcher.group(1);
                 // check extracted property
                 if(isPropertyIllegal(property)) {
+                    System.out.println("[Error] Error code: C03");
                     System.out.println("[WARNING] property '" + property + "' found in mapping '" + mapping.mappingName + "' is not a legal property.");
                     throw new IllegalConceptException(property + " is illegal.");
                 }
@@ -445,6 +460,7 @@ public class ConfigLoader {
                 String property = iterator.next();
                 System.out.println("[DEBUG] checking property '" + property + "'");
                 if(isPropertyIllegal(property)){
+                    System.out.println("[Error] Error code: V01");
                     System.out.println("[WARNING] system will ignore this property from now on.");
                     iterator.remove();
                 }
@@ -507,6 +523,7 @@ public class ConfigLoader {
             return vocabularyList.isIllegalConceptProperty(conceptName, value);
         }else {
             if (!exceptionList.contains(property)) {
+                System.out.println("[Error] Error code: C04");
                 System.out.println("[WARNING] property '" + property + "' does not exist in exception list.");
                 return true;
             }
