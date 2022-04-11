@@ -4,8 +4,8 @@ import com.google.gson.GsonBuilder;
 
 public class DataLabel {
 
-    public String label;
-    public String concept;
+    public String from;
+    public String to;
 
     public DataLabel(){
     }

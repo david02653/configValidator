@@ -271,12 +271,12 @@ public class ConfigLoader {
 
     private boolean isStoredDataInputLegal(ArrayList<DataLabel> dataLabelList, ArrayList<String> inputList){
         for(DataLabel dataSet: dataLabelList){
-            if(isPropertyIllegal(dataSet.concept)) {
-                System.out.println("[WARNING] concept '" + dataSet.concept + "' found in storedData input is illegal.");
+            if(isPropertyIllegal(dataSet.to)) {
+                System.out.println("[WARNING] concept '" + dataSet.to + "' found in storedData input is illegal.");
                 return false;
             }
-            if(!inputList.contains(dataSet.label)){
-                System.out.println("[WARNING] label '" + dataSet.label + "' found in storedData input is illegal.");
+            if(!inputList.contains(dataSet.from)){
+                System.out.println("[WARNING] label '" + dataSet.from + "' found in storedData input is illegal.");
                 return false;
             }
         }
@@ -287,12 +287,12 @@ public class ConfigLoader {
         if(dataLabels == null)
             return true;
         for(DataLabel dataSet: dataLabels){
-            if(isPropertyIllegal(dataSet.concept)){
-                System.out.println("[WARNING] concept '" + dataSet.concept + "' found in storedData output is illegal.");
+            if(isPropertyIllegal(dataSet.to)){
+                System.out.println("[WARNING] concept '" + dataSet.to + "' found in storedData output is illegal.");
                 return false;
             }
-            if(!outputDataLabelList.contains(dataSet.label)){
-                System.out.println("[WARNING] label '" + dataSet.label + "' found in storedData output is illegal.");
+            if(!outputDataLabelList.contains(dataSet.from)){
+                System.out.println("[WARNING] label '" + dataSet.from + "' found in storedData output is illegal.");
                 return false;
             }
         }

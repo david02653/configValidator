@@ -37,11 +37,11 @@
         description: access record
   storedData:
     input:
-      - label: Api.serviceName
-        concept: Api.serviceName
+      - from: Api.serviceName
+        to: Api.serviceName
     output:
-      - label: accessRecord
-        concept: AnalysisData.accessRecord
+      - from: accessRecord
+        to: AnalysisData.accessRecord
 - name: Jenkins-health
   context: jenkins
   accessLevel: service
@@ -77,12 +77,12 @@
     type: json
   storedData:
     input:
-      - label: User.username
-        concept: User.username
-      - label: Api.accessToken
-        concept: Api.username
-      - label: Api.serviceName
-        concept: Api.serviceName
+      - from: User.username
+        to: User.username
+      - from: Api.accessToken
+        to: Api.username
+      - from: Api.serviceName
+        to: Api.serviceName
 - name: Jenkins-latest-build-number
   context: jenkins
   accessLevel: service
@@ -100,15 +100,15 @@
     dataLabel: buildNumber
   storedData:
     input:
-      - label: User.username
-        concept: User.username
-      - label: Api.accessToken
-        concept: Api.accessToken
-      - label: Api.serviceName
-        concept: Api.serviceName
+      - from: User.username
+        to: User.username
+      - from: Api.accessToken
+        to: Api.accessToken
+      - from: Api.serviceName
+        to: Api.serviceName
     output:
-      - label: buildNumber
-        concept: Api.buildNumber
+      - from: buildNumber
+        to: Api.buildNumber
 - name: Jenkins-semi-test-report
   context: jenkins
   accessLevel: service
@@ -126,12 +126,12 @@
     type: plainText
   storedData:
     input:
-      - label: User.username
-        concept: User.username
-      - label: Api.accessToken
-        concept: Api.accessToken
-      - label: Api.serviceName
-        concept: Api.serviceName
+      - from: User.username
+        to: User.username
+      - from: Api.accessToken
+        to: Api.accessToken
+      - from: Api.serviceName
+        to: Api.serviceName
 - name: Jenkins-view-list
   context: jenkins
   accessLevel: system
@@ -146,7 +146,7 @@
   usedMappingList:
     - mappingName: jenkinsInfo
       description: basic jenkins information
-      schema: "{name: %{User-username}, token: %{Api-accessToken}, url: %{Api-endpoint}}"
+      schema: "{name: %{User.username}, token: %{Api.accessToken}, url: %{Api.endpoint}}"
 - name: Fake-test-capability
   context: general
   accessLevel: service
