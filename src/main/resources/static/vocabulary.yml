@@ -23,6 +23,14 @@ ConceptList:
     properties:
       - json
       - plainText
+      - aggregate
+  - conceptName: Aggregate
+    properties:
+      - chart
+      - table
+      - function
+      - link
+      - json
 ContextList:
   - contextName: jenkins
     properties:

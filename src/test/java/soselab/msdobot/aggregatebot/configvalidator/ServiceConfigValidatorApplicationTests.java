@@ -59,6 +59,12 @@ class ServiceConfigValidatorApplicationTests {
     }
 
     @Test
+    void jsonTest2(){
+        String test = "test";
+        System.out.println(validJsonViaGson(test));
+    }
+
+    @Test
     void regexDotTest(){
         String test = ".test";
         Pattern dotPattern = Pattern.compile("\\.");

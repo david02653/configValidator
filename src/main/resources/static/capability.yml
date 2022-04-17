@@ -182,6 +182,24 @@
     - User.name
   output:
     type: plainText
+- name: output-capability
+  context: general
+  accessLevel: service
+  description: sample output capability
+  method: GET
+  atomicIntent: none
+  apiEndpoint: url
+  input:
+    - User.username
+  output:
+    type: aggregate
+    aggregateDetail:
+      # aggregate method: chart/table/function/link/json
+      method: table
+      dataSource:
+        - context: jenkins
+          from: User.username
+          outputName: name
   #availableCapabilityList:
   #  - name: record-analyze
   #    accessLevel: service

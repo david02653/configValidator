@@ -11,7 +11,6 @@ import com.google.gson.JsonObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.env.Environment;
 
-import soselab.msdobot.aggregatebot.configvalidator.Entity.Agent.AgentList;
 import soselab.msdobot.aggregatebot.configvalidator.Entity.Capability.*;
 import soselab.msdobot.aggregatebot.configvalidator.Entity.Service.*;
 import soselab.msdobot.aggregatebot.configvalidator.Entity.UpperIntent.UpperIntent;
@@ -36,13 +35,11 @@ public class ConfigLoader {
     private final ObjectMapper mapper;
     private YAMLParser parser;
     private final Gson gson;
-    private final String agentConfigPath;
     private final String serviceConfigPath;
     private final String capabilityConfigPath;
     private final String upperIntentConfigPath;
     private final String vocabularyConfigPath;
 
-    public static AgentList agentList;
     public static ServiceList serviceList;
     public static ArrayList<Capability> capabilityList;
     public static UpperIntentList upperIntentList;
@@ -59,7 +56,6 @@ public class ConfigLoader {
         mapper = new ObjectMapper();
 //        gson = new Gson();
         gson = new GsonBuilder().setPrettyPrinting().create();
-        agentConfigPath = env.getProperty("bot.config.agent");
         serviceConfigPath = env.getProperty("bot.config.service");
         capabilityConfigPath = env.getProperty("bot.config.capability");
         upperIntentConfigPath = env.getProperty("bot.config.upperIntent");
@@ -67,29 +63,12 @@ public class ConfigLoader {
 
         loadVocabularyConfig();
         verifyContextProperties();
-        loadAgentConfig();
         loadCapabilityConfig();
         verifyCapabilityConfig();
         loadUpperIntentConfig();
         verifyUpperIntent();
         loadServiceConfig();
         verifyServiceConfig();
-    }
-
-    /**
-     * load agent config from config file
-     */
-    public void loadAgentConfig(){
-        try {
-            System.out.println("> try to load agent config from " + agentConfigPath);
-            parser = yamlFactory.createParser(new File(agentConfigPath));
-            agentList = mapper.readValue(parser, AgentList.class);
-            System.out.println(">>> " + agentList);
-            System.out.println("---");
-        }catch (IOException ioe){
-            ioe.printStackTrace();
-            System.out.println("> [DEBUG] agent config file load failed.");
-        }
     }
 
     /**
@@ -236,6 +215,15 @@ public class ConfigLoader {
                 capabilityIterator.remove();
                 continue;
             }
+            /* check aggregate data */
+            if(currentCapability.output != null && currentCapability.output.type.equals("aggregate")){
+                // check aggregate detail: context, from
+                if(!isAggregateDetailLegal(currentCapability, legalMappingList)){
+                    System.out.println("[WARNING] verification failed when processing aggregate details, this capability will be ignored from now on.");
+                    capabilityIterator.remove();
+                    continue;
+                }
+            }
             /* check stored data */
             if(currentCapability.storedData != null) {
                 // input
@@ -253,25 +241,48 @@ public class ConfigLoader {
         }
         System.out.println(">>> " + gson.toJson(capabilityList));
         System.out.println("---");
-//        while(capabilityIterator.hasNext()){
-//            Capability currentCapability = capabilityIterator.next();
-//            System.out.println("[DEBUG] checking capability '" + currentCapability.name + "'");
-//            // check input type
-//            if(currentCapability.input.stream().anyMatch(this::isPropertyIllegal)){
-//                System.out.println("[WARNING] illegal input vocabulary found in Capability '" + currentCapability.name + "'.");
-//                System.out.println("[WARNING] system will ignore Capability '" + currentCapability.name + "' from now on.");
-//                capabilityIterator.remove();
-//                continue; // move on to next capability if current one get removed
-//            }
-//            // check output type
-//            if(!vocabularyList.output.contains(currentCapability.output.type)){
-//                System.out.println("[WARNING] illegal output found in Capability '" + currentCapability.name + "'.");
-//                System.out.println("[WARNING] system will ignore Capability '" + currentCapability.name + "' from now on.");
-//                capabilityIterator.remove();
-//            }
-//        }
-//        System.out.println(">>> " + gson.toJson(capabilityList));
-//        System.out.println("---");
+    }
+
+    /**
+     * verify capability aggregate detail config
+     * @param capability target capability
+     * @param legalMappingList used custom mapping list
+     * @return true if aggregate detail is legal, otherwise false
+     */
+    private boolean isAggregateDetailLegal(Capability capability, ArrayList<String> legalMappingList){
+        boolean result = true;
+        if(capability.output.aggregateDetail == null) return false;
+        CapabilityOutput output = capability.output;
+        ArrayList<String> input = capability.input;
+        // check aggregate method
+        if(vocabularyList.isIllegalConceptProperty("Aggregate", output.aggregateDetail.method)) {
+            System.out.println("[Error] Error code: C10");
+            System.out.println("[WARNING] illegal capability aggregate method found.");
+            return false;
+        }
+        // check aggregate context/from
+        for(AggregateSource source: output.aggregateDetail.dataSource){
+            // check aggregate context is available
+            if(!vocabularyList.isAvailableContext(source.context)){
+                System.out.println("[Error] Error code: C11");
+                System.out.println("[WARNING] illegal aggregate source context '" + source.context + "' found.");
+                result = false;
+            }
+            // check aggregate source property is legal
+            if(isPropertyIllegal(source.from, legalMappingList)){
+                System.out.println("[Error] Error code: C12");
+                System.out.println("[WARNING] illegal aggregate source property '" + source.from + "' found");
+                result = false;
+            }
+            // todo: need to check given aggregate property exist in input list ?
+            // check if given property is not mapping and enabled in context domain
+            if(vocabularyList.isIllegalContextProperty(source.context, source.from) && !legalMappingList.contains(source.from)){
+                System.out.println("[Error] Error code: C13");
+                System.out.println("[WARNING] given aggregate property does not exist in given context");
+                result = false;
+            }
+        }
+        return result;
     }
 
     private boolean isStoredDataInputLegal(ArrayList<DataLabel> dataLabelList, ArrayList<String> inputList){

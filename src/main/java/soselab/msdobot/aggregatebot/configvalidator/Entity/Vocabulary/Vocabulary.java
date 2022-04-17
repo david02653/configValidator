@@ -54,7 +54,24 @@ public class Vocabulary {
     }
 
     /**
-     * check if given context is available<br>note that context 'general' is treated as default
+     * check if given property is enabled in specific context domain
+     * @param context target context domain
+     * @param property target property
+     * @return true if target property is not enabled in target context, otherwise return false
+     */
+    public boolean isIllegalContextProperty(String context, String property){
+        if(!contextMap.containsKey(context)){
+            System.out.println("[WARNING] context '" + context + "' does not exist.");
+            return true;
+        }else{
+            ArrayList<String> properties = contextMap.get(context);
+            return !properties.contains(property);
+        }
+    }
+
+    /**
+     * check if given context is available<br>
+     * note that context 'general' is treated as default
      * @param context given context
      * @return true if available, otherwise false
      */
