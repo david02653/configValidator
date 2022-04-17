@@ -43,7 +43,6 @@ public class ConfigLoader {
     public static ServiceList serviceList;
     public static ArrayList<Capability> capabilityList;
     public static UpperIntentList upperIntentList;
-//    public static ArrayList<UpperIntent> upperIntentList;
     public static Vocabulary vocabularyList;
 
     /**
@@ -54,7 +53,6 @@ public class ConfigLoader {
     public ConfigLoader(Environment env){
         yamlFactory = new YAMLFactory();
         mapper = new ObjectMapper();
-//        gson = new Gson();
         gson = new GsonBuilder().setPrettyPrinting().create();
         serviceConfigPath = env.getProperty("bot.config.service");
         capabilityConfigPath = env.getProperty("bot.config.capability");
@@ -78,7 +76,6 @@ public class ConfigLoader {
         try{
             System.out.println("> try to load skill config from " + capabilityConfigPath);
             parser = yamlFactory.createParser(new File(capabilityConfigPath));
-//            capabilityList = mapper.readValue(parser, CapabilityList.class);
             capabilityList = mapper.readValue(parser, new TypeReference<ArrayList<Capability>>(){});
             System.out.println(">>> " + capabilityList);
             System.out.println("---");
@@ -96,7 +93,6 @@ public class ConfigLoader {
             System.out.println("> try to load upper intent config from " + upperIntentConfigPath);
             parser = yamlFactory.createParser(new File(upperIntentConfigPath));
             upperIntentList = mapper.readValue(parser, UpperIntentList.class);
-//            upperIntentList = mapper.readValue(parser, new TypeReference<ArrayList<UpperIntent>>(){});
             System.out.println(">>> " + upperIntentList);
         }catch (IOException ioe){
             ioe.printStackTrace();
@@ -399,42 +395,6 @@ public class ConfigLoader {
             legalMappingList.add(mapping.mappingName);
         }
         return legalMappingList;
-//        // check custom mapping binding vocabulary and schema
-//        System.out.println("> start to verify vocabulary custom mapping.");
-//        Iterator<CustomMapping> mappingsIterator = vocabularyList.customMappingList.iterator();
-//        while(mappingsIterator.hasNext()){
-//            CustomMapping mapping = mappingsIterator.next();
-//            String mappingSchema = mapping.schema;
-//            String resultSchema = mappingSchema;
-//            Pattern vocabularyPattern = Pattern.compile("%\\{([a-zA-Z0-9-/]+)}");
-//            Matcher vocabularyMatcher = vocabularyPattern.matcher(mappingSchema);
-//            // create vocabulary verify list from schema data, format schema
-//            ArrayList<String> verifyList = new ArrayList<>();
-//            while (vocabularyMatcher.find()){
-//                String fullVocabulary = vocabularyMatcher.group(1);
-//                resultSchema = resultSchema.replaceAll("%\\{" + fullVocabulary + "}", "\"" + fullVocabulary + "\"");
-//                System.out.println("[DEBUG] vocabulary '" + fullVocabulary + "' detected in custom mapping schema '" + mapping.mappingName + "'");
-//                verifyList.add(fullVocabulary);
-//            }
-//            // check schema
-//            if(!isValidJsonString(resultSchema)){
-//                System.out.println("[WARNING] schema of mapping '" + mapping.mappingName + "' is not a json string.");
-//                System.out.println("[WARNING] system will ignore mapping '" + mapping.mappingName + "' from now on.");
-//                mappingsIterator.remove();
-//                continue;
-//            }
-//            // check vocabulary verify list
-//            for(String currentRawVocabulary: verifyList){
-//                if(isPropertyIllegal(currentRawVocabulary)){
-//                    System.out.println("[WARNING] system will ignore mapping '" + mapping.mappingName + "' from now on.");
-//                    mappingsIterator.remove();
-//                    break;
-//                }
-//            }
-//        }
-//        vocabularyList.createCustomMappingHashMap();
-//        System.out.println(">>> " + gson.toJson(vocabularyList));
-//        System.out.println("---");
     }
 
     /**
@@ -495,29 +455,6 @@ public class ConfigLoader {
         String conceptName = token[0];
         String value = token[1];
         return vocabularyList.isIllegalConceptProperty(conceptName, value);
-//        if(property.contains("/")){
-//            String conceptType = property.split("/")[0];
-//            String vocabulary = property.split("/", 2)[1];
-//            try{
-//                Concept concept = vocabularyList.getConcept(conceptType);
-//                /* no matched vocabulary found in target concept */
-//                if(!concept.properties.contains(vocabulary)){
-//                    System.out.println("[WARNING] vocabulary '" + vocabulary + "' is not available in concept '" + conceptType + "' !");
-//                    return true;
-//                }
-//            }catch (IllegalConceptException e){
-//                /* no concept found */
-//                System.out.println("[WARNING] concept '" + conceptType + "' does not exist.");
-//                return true;
-//            }
-//        }else{
-//            /* no matched vocabulary found in general concept */
-//            if(!vocabularyList.general.contains(property)){
-//                System.out.println("[WARNING] vocabulary '" + property + "' is not available in general concept !");
-//                return true;
-//            }
-//        }
-//        return false;
     }
 
     /**

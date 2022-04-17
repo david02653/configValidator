@@ -7,7 +7,6 @@ public class ServiceSystem {
     public String type;
     public String description;
     public ArrayList<ServiceConfig> config;
-    // todo: subService -> Service
     public ArrayList<Service> service;
 
     public ServiceSystem(){}
