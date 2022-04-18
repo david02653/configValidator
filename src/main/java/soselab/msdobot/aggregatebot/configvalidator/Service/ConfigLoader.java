@@ -281,6 +281,12 @@ public class ConfigLoader {
         return result;
     }
 
+    /**
+     * check if stored data input config legal
+     * @param dataLabelList input label of capability stored data
+     * @param inputList capability input labels
+     * @return true if all stored data input label are legal, otherwise return false
+     */
     private boolean isStoredDataInputLegal(ArrayList<DataLabel> dataLabelList, ArrayList<String> inputList){
         for(DataLabel dataSet: dataLabelList){
             if(isPropertyIllegal(dataSet.to)) {
@@ -297,6 +303,12 @@ public class ConfigLoader {
         return true;
     }
 
+    /**
+     * check if stored data output config legal
+     * @param dataLabels output label of capability stored data
+     * @param outputDataLabelList capability output labels
+     * @return true if all stored data output label are legal, otherwise return false
+     */
     private boolean isStoredDataOutputLegal(ArrayList<DataLabel> dataLabels, ArrayList<String> outputDataLabelList){
         if(dataLabels == null)
             return true;
@@ -398,7 +410,7 @@ public class ConfigLoader {
     }
 
     /**
-     * get all dataLabel in output config
+     * get all dataLabel in capability output config
      * @param output output config
      * @return output stored data label list
      * @throws IllegalConceptException if illegal output type found
