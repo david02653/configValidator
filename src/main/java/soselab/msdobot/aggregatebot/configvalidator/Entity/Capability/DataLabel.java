@@ -6,6 +6,7 @@ public class DataLabel {
 
     public String from;
     public String to;
+    public String addToGlobal;
 
     public DataLabel(){
     }
