@@ -18,7 +18,6 @@ public class Service {
         this.config = config;
     }
 
-
     public HashMap<String, String> getConfigMap() {
         return configMap;
     }

@@ -13,6 +13,7 @@ ConceptList:
       - serviceName
       - buildNumber
       - accessToken
+      - targetService
   - conceptName: AnalysisData
     properties:
       - healthData
@@ -24,7 +25,8 @@ ConceptList:
       - json
       - plainText
       - aggregate
-  - conceptName: Aggregate
+      - rendering
+  - conceptName: AggregateMethod
     properties:
       - chart
       - table
@@ -45,38 +47,3 @@ ContextList:
     properties:
       - User.username
       - User.password
-# ----- previous format -----
-#general:
-#  - accessToken
-#  - username
-#  - endpoint
-#  - targetService
-#  - buildNumber
-#output:
-#  - plainText
-#  - json
-#contextList:
-#  - contextName: general
-#    schema: "{}"
-#  - contextName: jenkins
-#    schema: "{}"
-#  - contextName: Eureka
-#    schema: "{}"
-#conceptList:
-#  - conceptName: configRetrieve
-#    schema: "{}"
-#conceptList:
-#  - conceptName: jenkins
-#    usedVocabulary:
-#      - username
-#  - conceptName: fake-concept
-#    usedVocabulary:
-#      - username
-#      - no
-#  - conceptName: fake-concept-2
-#    usedVocabulary:
-#      - fake-concept/username
-#      - username
-#  - conceptName: fake-concept-3
-#    usedVocabulary:
-#      - fake-concept-2/fake-concept/username
