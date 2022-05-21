@@ -257,7 +257,7 @@ public class ConfigLoader {
             }
             /* check api endpoint */
             var endpoint = currentCapability.apiEndpoint;
-            if(endpoint.isBlank()){
+            if(endpoint == null || endpoint.isBlank()){
                 System.out.println("  [Error] Error code: C03");
                 System.out.println("  [WARNING] capability '" + currentCapability.name + "' has no assigned endpoint.");
                 System.out.println("  [WARNING] this capability will be ignored by system from now on.");
@@ -372,7 +372,7 @@ public class ConfigLoader {
                     System.out.println("  [WARNING] illegal property data source");
                     return true;
                 }
-                if(dataSource.getUseAs().isBlank())
+                if(dataSource.getUseAs() == null || dataSource.getUseAs().isBlank())
                     dataSource.setUseAs(dataSource.context + '.' + dataSource.getFrom());
             }else{
                 if(isAggregateDataComponentIllegal(dataSource.aggregateDataComponent)){
@@ -385,7 +385,7 @@ public class ConfigLoader {
                     System.out.println("  [WARNING] illegal aggregate data source access level");
                     return true;
                 }
-                if(dataSource.useAs.isBlank()){
+                if(dataSource.useAs == null || dataSource.useAs.isBlank()){
                     System.out.println("  [Error] Error code C18");
                     System.out.println("  [WARNING] no use name assigned in aggregate data source");
                     return true;
@@ -444,7 +444,7 @@ public class ConfigLoader {
                 return true;
             }
             // aggregate: check result name
-            if(aggregateDetail.resultName.isBlank()){
+            if(aggregateDetail.resultName == null || aggregateDetail.resultName.isBlank()){
                 System.out.println("  [Error] Error code: C20");
                 System.out.println("  [WARNING] no aggregate result name assigned");
                 return true;
