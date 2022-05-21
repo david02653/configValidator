@@ -20,6 +20,12 @@ ConceptList:
       - cohesion
       - coupling
       - accessRecord
+      - countNumber
+  - conceptName: Data
+    properties:
+      - information
+      - errorLog
+      - log
   - conceptName: Output
     properties:
       - json
@@ -47,3 +53,14 @@ ContextList:
     properties:
       - User.username
       - User.password
+  - contextName: pseudoServiceInfo
+    properties:
+      - Data.information
+      - Data.errorLog
+  - contextName: pseudoServiceGateway
+    properties:
+      - Data.information
+      - Data.log
+  - contextName: pseudoServiceBuild
+    properties:
+      - Data.log

@@ -4,9 +4,12 @@ import com.google.gson.GsonBuilder;
 
 public class DataLabel {
 
+    // data source
     public String from;
+    // data destination
     public String to;
-    public String addToGlobal;
+    // add config to global config or not
+    public boolean addToGlobal;
 
     public DataLabel(){
     }

@@ -20,8 +20,7 @@ import soselab.msdobot.aggregatebot.configvalidator.Exception.IllegalConceptExce
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,6 +42,7 @@ public class ConfigLoader {
     public static ServiceList serviceList;
     public static ArrayList<Capability> capabilityList;
     public static UpperIntentList upperIntentList;
+    //    public static ArrayList<UpperIntent> upperIntentList;
     public static Vocabulary vocabularyList;
 
     /**
@@ -53,6 +53,7 @@ public class ConfigLoader {
     public ConfigLoader(Environment env){
         yamlFactory = new YAMLFactory();
         mapper = new ObjectMapper();
+//        gson = new Gson();
         gson = new GsonBuilder().setPrettyPrinting().create();
         serviceConfigPath = env.getProperty("bot.config.service");
         capabilityConfigPath = env.getProperty("bot.config.capability");
@@ -106,16 +107,16 @@ public class ConfigLoader {
      */
     private void verifyUpperIntent(){
         System.out.println("> start to verify upper intent config");
-        Iterator<UpperIntent> intentIterator = upperIntentList.crossCapabilityList.iterator();
-        while(intentIterator.hasNext()){
-            UpperIntent currentIntent = intentIterator.next();
-            System.out.println("[DEBUG] checking upper intent '" + currentIntent.name + "'");
-            for(Capability step: currentIntent.sequencedCapabilityList){
+        Iterator<UpperIntent> upperIntentIterator = upperIntentList.crossCapabilityList.iterator();
+        while(upperIntentIterator.hasNext()){
+            UpperIntent currentUpperIntent = upperIntentIterator.next();
+            System.out.println("[DEBUG] checking upper intent '" + currentUpperIntent.name + "'");
+            for(Capability step: currentUpperIntent.sequencedCapabilityList){
                 if(capabilityList.stream().noneMatch(capability -> capability.name.equals(step.name))){
-                    System.out.println("[Error] Error code: U01");
-                    System.out.println("[WARNING] capability '" + step.name + "' at order " + step.order + " from upper intent '" + currentIntent.name + "' is not available !");
-                    System.out.println("[WARNING] system will ignore upperIntent '" + currentIntent.name + "' from now on.");
-                    intentIterator.remove();
+                    System.out.println("  [Error] Error code: U01");
+                    System.out.println("  [WARNING] capability '" + step.name + "' at order " + step.order + " from upper intent '" + currentUpperIntent.name + "' is not available !");
+                    System.out.println("  [WARNING] system will ignore upperIntent '" + currentUpperIntent.name + "' from now on.");
+                    upperIntentIterator.remove();
                     break;
                 }
             }
@@ -133,7 +134,7 @@ public class ConfigLoader {
             parser = yamlFactory.createParser(new File(serviceConfigPath));
             serviceList = mapper.readValue(parser, ServiceList.class);
             System.out.println(">>> " + serviceList);
-//            generateServiceMap();
+            generateServiceMap();
             System.out.println("---");
         }catch (IOException ioe){
             ioe.printStackTrace();
@@ -166,6 +167,66 @@ public class ConfigLoader {
     }
 
     /**
+     * generate a service list in hashmap form<br>
+     * this map could be used as a quick lookup table when checking service level
+     */
+    public void generateServiceMap(){
+        System.out.println("[DEBUG] start to generate service map");
+        HashMap<String, Service> tempServiceMap = new HashMap<>();
+        for(ServiceSystem system: serviceList.serviceList){
+            // system
+            tempServiceMap.put(system.name, new Service(system.name, system.type, system.description, system.config));
+            // sub service
+            for(Service service: system.service){
+                tempServiceMap.put(service.name, new Service(service.name, service.type, service.description, mergeConfig(system.config, service.config)));
+            }
+        }
+        serviceList.setServiceMap(tempServiceMap);
+        System.out.println(">>> " + gson.toJson(serviceList));
+    }
+
+    /**
+     * merge system config and service config and return new instance of config array list
+     * @param generalConfig system config
+     * @param config service config
+     * @return merged config
+     */
+    private ArrayList<ServiceConfig> mergeConfig(ArrayList<ServiceConfig> generalConfig, ArrayList<ServiceConfig> config){
+        ArrayList<ServiceConfig> result;
+        // todo: merge service config
+        if(generalConfig == null){
+            return Objects.requireNonNullElseGet(config, ArrayList::new);
+        }else{
+            if(config == null)
+                return generalConfig;
+            else{
+                // merge config
+                result = new ArrayList<>(generalConfig);
+                // foreach new subService config
+                for(ServiceConfig currentConfig: config){
+                    // get previous context config if exist
+                    if(result.stream().anyMatch(previous -> previous.context.equals(currentConfig.context))){
+                        ServiceConfig temp = result.stream().filter(current -> current.context.equals(currentConfig.context)).findFirst().get();
+                        for(ContextConfig property: currentConfig.properties){
+                            if(temp.properties.stream().anyMatch(previous -> previous.name.equals(property.name))){
+                                temp.properties.stream().filter(previous -> previous.name.equals(property.name)).findFirst().get().setValue(property.value);
+                            }else{
+                                temp.properties.add(property);
+                            }
+                        }
+                        // update config
+                        result.removeIf(previous -> previous.context.equals(currentConfig.context));
+                        result.add(temp);
+                    }else{
+                        result.add(currentConfig);
+                    }
+                }
+                return result;
+            }
+        }
+    }
+
+    /**
      * verify all listed vocabulary in capability specification file is legal
      */
     public void verifyCapabilityConfig(){
@@ -174,21 +235,46 @@ public class ConfigLoader {
         while(capabilityIterator.hasNext()){
             Capability currentCapability = capabilityIterator.next();
             System.out.println("[DEBUG] checking capability '" + currentCapability.name + "'");
-            if(currentCapability.isRenderingMethod){
-                // todo: verify rendering method
-                continue;
-            }
-            if(!currentCapability.isAggregateMethod){
-                /* check context */
-                String context = currentCapability.context;
-                if (!vocabularyList.isAvailableContext(context)) {
-                    System.out.println("[Error] Error code: C01");
-                    System.out.println("[WARNING] context '" + context + "' found in capability '" + currentCapability.name + "' is illegal");
-                    System.out.println("[WARNING] this capability will be ignored by system from now on.");
+            /* check general config */
+            if(!currentCapability.isRenderingMethod) {
+                /* check access level */
+                if (isAccessLevelIllegal(currentCapability.accessLevel)) {
+                    System.out.println("  [Error] Error code: C01");
+                    System.out.println("  [WARNING] capability '" + currentCapability.name + "' has illegal access level config.");
+                    System.out.println("  [WARNING] this capability will be ignored by system from now on.");
                     capabilityIterator.remove();
                     continue;
                 }
+                /* check context */
+                var context = currentCapability.context;
+                if (!vocabularyList.isAvailableContext(context)) {
+                    System.out.println("  [Error] Error code: C02");
+                    System.out.println("  [WARNING] context '" + context + "' found in capability '" + currentCapability.name + "' is illegal");
+                    System.out.println("  [WARNING] this capability will be ignored by system from now on.");
+                    capabilityIterator.remove();
+                    continue;
+                }
+            }
+            /* check api endpoint */
+            var endpoint = currentCapability.apiEndpoint;
+            if(endpoint.isBlank()){
+                System.out.println("  [Error] Error code: C03");
+                System.out.println("  [WARNING] capability '" + currentCapability.name + "' has no assigned endpoint.");
+                System.out.println("  [WARNING] this capability will be ignored by system from now on.");
+                capabilityIterator.remove();
+                continue;
+            }
+            if(isCrossContextCapability(currentCapability)){
+                /* check aggregate and rendering settings */
+                if(verifyCrossContextCapability(currentCapability)){
+                    // illegal config exist
+                    System.out.println("  [WARNING] this capability will be ignored by system from now on.");
+                    capabilityIterator.remove();
+                }
+            }else{
+                /* normal capability */
                 /* check used mapping */
+                // illegal schema: C04, illegal used property: C05
                 final ArrayList<String> legalMappingList;
                 try {
                     if (currentCapability.usedMappingList != null)
@@ -196,19 +282,21 @@ public class ConfigLoader {
                     else
                         legalMappingList = new ArrayList<>();
                 } catch (IllegalConceptException ic) {
-                    System.out.println("[WARNING] verification failed when processing custom mapping, this capability will be ignored from now on.");
+                    System.out.println("  [WARNING] verification failed when processing custom mapping, this capability will be ignored from now on.");
                     capabilityIterator.remove();
                     continue;
                 }
                 /* check input */
+                // illegal input: C06
                 if (currentCapability.input.stream().anyMatch(input -> isPropertyIllegal(input, legalMappingList))) {
-                    System.out.println("[WARNING] verification failed when processing input properties, this capability will be ignored from now on.");
+                    System.out.println("  [WARNING] verification failed when processing input properties, this capability will be ignored from now on.");
                     capabilityIterator.remove();
                     continue;
                 }
                 /* check output */
+                // illegal output: C07
                 if (missingDataLabel(currentCapability.output)) {
-                    System.out.println("[WARNING] verification failed when processing output config, this capability will be ignored from now on.");
+                    System.out.println("  [WARNING] verification failed when processing output config, this capability will be ignored from now on.");
                     capabilityIterator.remove();
                     continue;
                 }
@@ -216,69 +304,26 @@ public class ConfigLoader {
                 try {
                     outputStoredDataLabelList = getOutputStoredDataList(currentCapability.output);
                 } catch (IllegalConceptException ic) {
-                    System.out.println("[Error] Error code: C05");
-                    System.out.println("[WARNING] verification failed when processing output config, this capability will be ignored from now on.");
+                    System.out.println("  [Error] Error code: C08");
+                    System.out.println("  [WARNING] verification failed when processing output config, this capability will be ignored from now on.");
                     capabilityIterator.remove();
                     continue;
                 }
-//                /* check aggregate data */
-//                if (currentCapability.output != null && currentCapability.output.type.equals("aggregate")) {
-//                    // check aggregate detail: context, from
-//                    if (!isAggregateDetailLegal(currentCapability, legalMappingList)) {
-//                        System.out.println("[WARNING] verification failed when processing aggregate details, this capability will be ignored from now on.");
-//                        capabilityIterator.remove();
-//                        continue;
-//                    }
-//                }
                 /* check stored data */
                 if (currentCapability.storedData != null) {
                     // input
+                    // illegal data destination: C09, illegal data source: C10
                     if (!isStoredDataInputLegal(currentCapability.storedData.input, currentCapability.input)) {
-                        System.out.println("[WARNING] verification failed when processing storedData input config, this capability will be ignored from now on.");
+                        System.out.println("  [WARNING] verification failed when processing storedData input config, this capability will be ignored from now on.");
                         capabilityIterator.remove();
                         continue;
                     }
                     // output
+                    // illegal data destination: C11, illegal data source: C12
                     if (!isStoredDataOutputLegal(currentCapability.storedData.output, outputStoredDataLabelList)) {
-                        System.out.println("[WARNING] illegal output label found in storedData, this capability will be ignored from now on.");
+                        System.out.println("  [WARNING] illegal output label found in storedData, this capability will be ignored from now on.");
                         capabilityIterator.remove();
                     }
-                }
-            } else {
-                // verify aggregate capability
-                AggregateDetail aggregateDetail = currentCapability.aggregateDetail;
-                /* check if aggregate detail is even exist */
-                if(aggregateDetail == null){
-                    System.out.println("[Error] Error code: C16");
-                    System.out.println("[WARNING] aggregate capability found but missing aggregate detail, this capability will be ignored from now on.");
-                    capabilityIterator.remove();
-                    continue;
-                }
-                /* check used material */
-                if(aggregateDetail.storeResult){
-                    if(aggregateDetail.usedMaterial == null){
-                        System.out.println("[Error] Error code: C17.");
-                        System.out.println("[WARNING] missing stored data about aggregate result, this capability will be ignored from now on.");
-                        capabilityIterator.remove();
-                        continue;
-                    }
-                    if(isUsedMaterialIllegal(aggregateDetail.usedMaterial, currentCapability.accessLevel)){
-                        System.out.println("[WARNING] illegal config found in used material config, this capability will be ignored from now on.");
-                        capabilityIterator.remove();
-                        continue;
-                    }
-                }
-                /* check aggregate capability data source */
-                if(aggregateDetail.dataSource == null){
-                    // check if aggregate data source do exist
-                    System.out.println("[Error] Error code: C20");
-                    System.out.println("[WARNING] no input data source found in aggregate capability '" + currentCapability.name + "', this capability will be ignored from now on.");
-                    capabilityIterator.remove();
-                    continue;
-                }
-                if(isAggregateDataSourceIllegal(currentCapability)){
-                    System.out.println("[WARNING] error occurs when verifying aggregate data source, this capability will be ignored from now on");
-                    capabilityIterator.remove();
                 }
             }
         }
@@ -287,69 +332,127 @@ public class ConfigLoader {
     }
 
     /**
-     * check if used material in aggregate detail contains illegal config
-     * @param usedMaterial used material in aggregate detail
+     * check if capability access level is legal
      * @param accessLevel capability access level
-     * @return true if any config goes wrong, otherwise return false
+     * @return true access level is illegal, otherwise return false
      */
-    private boolean isUsedMaterialIllegal(AggregateDataMaterial usedMaterial, String accessLevel){
-        // check context in used material
-        for(String context: usedMaterial.context){
-            if(!vocabularyList.isAvailableContext(context)){
-                System.out.println("[Error] Error code: C18");
-                System.out.println("[WARNING] context '" + context + "' found in used material is not available.");
-                return true;
-            }
-        }
-        // check property in used material (is property exist and legal ?)
-        for(String property: usedMaterial.property){
-            if(isPropertyIllegal(property)){
-                System.out.println("[Error] Error code: C19");
-                System.out.println("[WARNING] property '" + property + "' found in used material is not available.");
-                return true;
+    private boolean isAccessLevelIllegal(String accessLevel){
+        final String SYSTEM_LEVEL = "system";
+        final String SERVICE_LEVEL = "service";
+        if(accessLevel == null)
+            return true;
+        return !accessLevel.equals(SERVICE_LEVEL) && !accessLevel.equals(SYSTEM_LEVEL);
+    }
+
+    /**
+     * check given capability is aggregate/rendering capability or not
+     * @param capability target capability
+     * @return true if given capability is aggregate capability or rendering capability, otherwise return false
+     */
+    private boolean isCrossContextCapability(Capability capability){
+        return capability.isAggregateMethod || capability.isRenderingMethod;
+    }
+
+    /**
+     * check if aggregate/rendering data source contains any illegal config
+     * @param dataSources capability data source
+     * @return true if any data source is illegal, otherwise return false
+     */
+    private boolean isCrossContextDataSourceIllegal(ArrayList<AggregateSource> dataSources){
+        for(AggregateSource dataSource: dataSources){
+            var isProperty = !dataSource.isAggregationData;
+            if(isProperty){
+                if(!vocabularyList.isAvailableContext(dataSource.context)){
+                    System.out.println("  [Error] Error code: C14");
+                    System.out.println("  [WARNING] property type data source contains illegal context");
+                    return true;
+                }
+                if(vocabularyList.isIllegalContextProperty(dataSource.context, dataSource.getFrom())){
+                    System.out.println("  [Error] Error code: C15");
+                    System.out.println("  [WARNING] illegal property data source");
+                    return true;
+                }
+                if(dataSource.getUseAs().isBlank())
+                    dataSource.setUseAs(dataSource.context + '.' + dataSource.getFrom());
+            }else{
+                if(isAggregateDataComponentIllegal(dataSource.aggregateDataComponent)){
+                    System.out.println("  [Error] Error code: C16");
+                    System.out.println("  [WARNING] illegal aggregate data component found in data source");
+                    return true;
+                }
+                if(isAccessLevelIllegal(dataSource.aggregationLevel)){
+                    System.out.println("  [Error] Error code: C17");
+                    System.out.println("  [WARNING] illegal aggregate data source access level");
+                    return true;
+                }
+                if(dataSource.useAs.isBlank()){
+                    System.out.println("  [Error] Error code C18");
+                    System.out.println("  [WARNING] no use name assigned in aggregate data source");
+                    return true;
+                }
             }
         }
         return false;
     }
 
     /**
-     * verify capability aggregate data source config
-     * @param capability target capability
-     * @return true if any aggregate data source is illegal, otherwise false
+     * check if aggregate data component contains any illegal config
+     * @param component aggregate data component
+     * @return true if any illegal config found in component, otherwise return false
      */
-    private boolean isAggregateDataSourceIllegal(Capability capability){
-        AggregateDetail aggregateDetail = capability.aggregateDetail;
-        for(AggregateSource dataSource: aggregateDetail.dataSource){
-            if(dataSource.isAggregationData){
-                AggregateDataMaterial materials = dataSource.aggregateDataMaterial;
-                // check aggregate data input
-                for(String context: materials.context){
-                    if(!vocabularyList.isAvailableContext(context)){
-                        System.out.println("[Error] Error code: C20");
-                        System.out.println("[WARNING] assigned context '" + context + "' in aggregate data source is not available");
-                        return true;
-                    }
-                }
-                for(String property: materials.property){
-                    if(isPropertyIllegal(property)){
-                        System.out.println("[Error] Error code: C21");
-                        System.out.println("[WARNING] assign property '" + property + "' in aggregate data source is not available");
-                        return true;
-                    }
-                }
-            }else{
-                // check normal property input
-                if(!vocabularyList.isAvailableContext(dataSource.context)){
-                    System.out.println("[Error] Error code: C22");
-                    System.out.println("[WARNING] context '" + dataSource.context + "' found in data source is illegal");
+    private boolean isAggregateDataComponentIllegal(AggregateDataComponent component){
+        if(component == null) return true;
+        if(component.context != null)
+            for(String context: component.context)
+                if(!vocabularyList.isAvailableContext(context))
                     return true;
-                }
-                if(isPropertyIllegal(dataSource.from)){
-                    System.out.println("[Error] Error code: C23");
-                    System.out.println("[WARNING] property '" + dataSource.from + "' found in data source is illegal");
+        if(component.property != null)
+            for(String property: component.property)
+                if(isPropertyIllegal(property))
                     return true;
-                }
+        return false;
+    }
+
+    /**
+     * verify aggregate capability and rendering capability
+     * @param capability target capability
+     * @return true any illegal config exist, otherwise return false
+     */
+    private boolean verifyCrossContextCapability(Capability capability){
+        var isAggregate = capability.isAggregateMethod;
+        var isRendering = capability.isRenderingMethod;
+        var aggregateDetail = capability.aggregateDetail;
+        var renderingDetail = capability.renderingDetail;
+        // check data source
+        if((isAggregate && aggregateDetail == null) || (isRendering && renderingDetail == null)){
+            System.out.println("  [Error] Error code: C13");
+            System.out.println("  [WARNING] Aggregate/Rendering capability detected but no detail config found.");
+            return true;
+        }
+        //C14: property type data source: illegal context
+        //C15: illegal property data source
+        //C16: data source: illegal aggregate data component
+        //C17: illegal aggregate data source access level
+        //C18: aggregate data source - no use name assigned
+        if(isAggregate){
+            if(isCrossContextDataSourceIllegal(aggregateDetail.dataSource))
+                return true;
+            // aggregate: check component
+            if(isAggregateDataComponentIllegal(aggregateDetail.usedComponent)){
+                System.out.println("  [Error] Error code: C19");
+                System.out.println("  [WARNING] illegal aggregate component config");
+                return true;
             }
+            // aggregate: check result name
+            if(aggregateDetail.resultName.isBlank()){
+                System.out.println("  [Error] Error code: C20");
+                System.out.println("  [WARNING] no aggregate result name assigned");
+                return true;
+            }
+        }
+        if(isRendering){
+            if(isCrossContextDataSourceIllegal(renderingDetail.dataSource))
+                return true;
         }
         return false;
     }
@@ -361,15 +464,17 @@ public class ConfigLoader {
      * @return true if all stored data input label are legal, otherwise return false
      */
     private boolean isStoredDataInputLegal(ArrayList<DataLabel> dataLabelList, ArrayList<String> inputList){
+        if(dataLabelList == null)
+            return true;
         for(DataLabel dataSet: dataLabelList){
             if(isPropertyIllegal(dataSet.to)) {
-                System.out.println("[Error] Error code: C06");
-                System.out.println("[WARNING] data destination '" + dataSet.to + "' found in storedData input is illegal.");
+                System.out.println("  [Error] Error code: C09");
+                System.out.println("  [WARNING] data destination '" + dataSet.to + "' found in storedData input is illegal.");
                 return false;
             }
             if(!inputList.contains(dataSet.from)){
-                System.out.println("[Error] Error code: C07");
-                System.out.println("[WARNING] data source '" + dataSet.from + "' found in storedData input is illegal.");
+                System.out.println("  [Error] Error code: C10");
+                System.out.println("  [WARNING] data source '" + dataSet.from + "' found in storedData input is illegal.");
                 return false;
             }
         }
@@ -387,13 +492,13 @@ public class ConfigLoader {
             return true;
         for(DataLabel dataSet: dataLabels){
             if(isPropertyIllegal(dataSet.to)){
-                System.out.println("[Error] Error code: C08");
-                System.out.println("[WARNING] data destination '" + dataSet.to + "' found in storedData output is illegal.");
+                System.out.println("  [Error] Error code: C11");
+                System.out.println("  [WARNING] data destination '" + dataSet.to + "' found in storedData output is illegal.");
                 return false;
             }
             if(!outputDataLabelList.contains(dataSet.from)){
-                System.out.println("[Error] Error code: C09");
-                System.out.println("[WARNING] data source '" + dataSet.from + "' found in storedData output is illegal.");
+                System.out.println("  [Error] Error code: C12");
+                System.out.println("  [WARNING] data source '" + dataSet.from + "' found in storedData output is illegal.");
                 return false;
             }
         }
@@ -411,17 +516,17 @@ public class ConfigLoader {
             // context
             if(system.config != null){
                 if(system.config.removeIf(config -> !vocabularyList.isAvailableContext(config.context))) {
-                    System.out.println("[Error] Error code: S01");
-                    System.out.println("[WARNING] illegal context found in system '" + system.name + "'.");
-                    System.out.println("[WARNING] this context config setting will be ignored by system from now on.");
+                    System.out.println("  [Error] Error code: S01");
+                    System.out.println("  [WARNING] illegal context found in system '" + system.name + "'.");
+                    System.out.println("  [WARNING] this context config setting will be ignored by system from now on.");
                 }
                 // context property
                 for(ServiceConfig serviceConfig: system.config){
-                    System.out.println("[DEBUG] checking system config setting of context '" + serviceConfig.context + "'");
+                    System.out.println("  [DEBUG] checking system config setting of context '" + serviceConfig.context + "'");
                     if(serviceConfig.properties.removeIf(config -> isPropertyIllegal(config.name))){
-                        System.out.println("[Error] Error code: S02");
-                        System.out.println("[WARNING] illegal property found in context '" + serviceConfig.context + "' config.");
-                        System.out.println("[WARNING] illegal property config will be ignored by system from now on.");
+                        System.out.println("  [Error] Error code: S02");
+                        System.out.println("  [WARNING] illegal property found in context '" + serviceConfig.context + "' config.");
+                        System.out.println("  [WARNING] illegal property config will be ignored by system from now on.");
                     }
                 }
             }
@@ -432,16 +537,16 @@ public class ConfigLoader {
                 // context
                 if(service.config != null){
                     if(service.config.removeIf(config -> !vocabularyList.isAvailableContext(config.context))){
-                        System.out.println("[Error] Error code: S03");
-                        System.out.println("[WARNING] illegal context found in service '" + service.name + "'.");
-                        System.out.println("[WARNING] this context config setting will be ignored by system from now on.");
+                        System.out.println("  [Error] Error code: S03");
+                        System.out.println("  [WARNING] illegal context found in service '" + service.name + "'.");
+                        System.out.println("  [WARNING] this context config setting will be ignored by system from now on.");
                     }
                     // context property
                     for(ServiceConfig serviceConfig: service.config){
                         if(serviceConfig.properties.removeIf(config -> isPropertyIllegal(config.name))){
-                            System.out.println("[Error] Error code: S04");
-                            System.out.println("[WARNING] illegal property found in context '" + serviceConfig.context + "' config.");
-                            System.out.println("[WARNING] illegal property config will be ignored by system from now on.");
+                            System.out.println("  [Error] Error code: S04");
+                            System.out.println("  [WARNING] illegal property found in context '" + serviceConfig.context + "' config.");
+                            System.out.println("  [WARNING] illegal property config will be ignored by system from now on.");
                         }
                     }
                 }
@@ -463,8 +568,8 @@ public class ConfigLoader {
         for(CustomMapping mapping: mappingList){
             // check schema
             if(!isValidJsonString(mapping.schema.replaceAll("%\\{[a-zA-Z0-9-/.]+}", "\"test\""))) {
-                System.out.println("[Error] Error code: C02");
-                System.out.println("[WARNING] given schema is not a legal json string.");
+                System.out.println("  [Error] Error code: C04");
+                System.out.println("  [WARNING] given schema is not a legal json string.");
                 throw new IllegalConceptException("illegal schema format");
             }
             propertyMatcher = propertyPattern.matcher(mapping.schema);
@@ -472,8 +577,8 @@ public class ConfigLoader {
                 String property = propertyMatcher.group(1);
                 // check extracted property
                 if(isPropertyIllegal(property)) {
-                    System.out.println("[Error] Error code: C03");
-                    System.out.println("[WARNING] property '" + property + "' found in mapping '" + mapping.mappingName + "' is not a legal property.");
+                    System.out.println("  [Error] Error code: C05");
+                    System.out.println("  [WARNING] property '" + property + "' found in mapping '" + mapping.mappingName + "' is not a legal property.");
                     throw new IllegalConceptException(property + " is illegal.");
                 }
             }
@@ -494,8 +599,8 @@ public class ConfigLoader {
         if(output.type.equals("plainText")){
             // check data label
             if(output.dataLabel == null || output.dataLabel.isEmpty()) {
-                System.out.println("[Error] Error code: C14");
-                System.out.println("[WARNING] output type is 'plainText' but no data label found.");
+                System.out.println("  [Error] Error code: C07");
+                System.out.println("  [WARNING] output type is 'plainText' but no data label found.");
                 return true;
             }
         }else if(output.type.equals("json")){
@@ -503,8 +608,8 @@ public class ConfigLoader {
             ArrayList<JsonInfo> infos = output.jsonInfo;
             for(JsonInfo info: infos){
                 if(info.dataLabel == null || info.dataLabel.isEmpty()){
-                    System.out.println("[Error code: C15]");
-                    System.out.println("[WARNING] found json info with no data label.");
+                    System.out.println("[Error code: C07]");
+                    System.out.println("  [WARNING] found json info with no data label.");
                     return true;
                 }
             }
@@ -513,7 +618,7 @@ public class ConfigLoader {
     }
 
     /**
-     * get all dataLabel in capability output config
+     * get all dataLabel in output config
      * @param output output config
      * @return output stored data label list
      * @throws IllegalConceptException if illegal output type found
@@ -521,7 +626,7 @@ public class ConfigLoader {
     public ArrayList<String> getOutputStoredDataList(CapabilityOutput output) throws IllegalConceptException {
         // check output type
         if(!vocabularyList.getOutputConcept().contains(output.type))
-            throw new IllegalConceptException("[WARNING] illegal output type detected.");
+            throw new IllegalConceptException("  [WARNING] illegal output type detected.");
         ArrayList<String> storedDataLabelList = new ArrayList<>();
         if(output.dataLabel != null && !output.dataLabel.isEmpty())
             storedDataLabelList.add(output.dataLabel);
@@ -531,6 +636,35 @@ public class ConfigLoader {
                 if(jsonInfo.dataLabel != null && !jsonInfo.dataLabel.isEmpty())
                     storedDataLabelList.add(jsonInfo.dataLabel);
         return storedDataLabelList;
+    }
+
+    /**
+     * get correspond capabilities by target intent
+     * @param intent target intent
+     * @return correspond capability
+     */
+    public ArrayList<Capability> getCorrespondCapabilityByIntent(String intent){
+        // check normal capability
+        if(capabilityList.stream().anyMatch(capability -> capability.atomicIntent.equals(intent))) {
+            return new ArrayList<>(List.of(capabilityList.stream().filter(capability -> capability.atomicIntent.equals(intent)).findFirst().get()));
+        } else
+            return new ArrayList<>();
+    }
+
+    /**
+     * get complete capabilities list by target upper intent
+     * @param upperIntent target upper intent
+     * @return capability list
+     */
+    public ArrayList<Capability> getUpperIntentCapabilityListByIntent(String upperIntent){
+        System.out.println("[DEBUG] start to check upper intent");
+        System.out.println(new Gson().toJson(upperIntentList));
+        ArrayList<Capability> semiCapabilityList = upperIntentList.getSemiCapabilityList(upperIntent);
+        ArrayList<Capability> resultList = new ArrayList<>();
+        for(Capability semiCapability: semiCapabilityList){
+            resultList.add(capabilityList.stream().filter(capability -> capability.name.equals(semiCapability.name)).findFirst().get());
+        }
+        return resultList;
     }
 
     /**
@@ -546,8 +680,8 @@ public class ConfigLoader {
                 String property = iterator.next();
                 System.out.println("[DEBUG] checking property '" + property + "'");
                 if(isPropertyIllegal(property)){
-                    System.out.println("[Error] Error code: V01");
-                    System.out.println("[WARNING] system will ignore this property from now on.");
+                    System.out.println("  [Error] Error code: V01");
+                    System.out.println("  [WARNING] system will ignore this property from now on.");
                     iterator.remove();
                 }
             }
@@ -558,14 +692,13 @@ public class ConfigLoader {
     }
 
     /**
-     * check if given property is available in assigned concept, concept name and property are expected to be separated by dot character<br>example: conceptA.propertyA
+     * check if given property is available in assigned concept, concept name and property are expected to be separated by hyphen character<br>example: conceptA-propertyA
      * @param property input property
      * @return true if illegal, otherwise false
      */
     private boolean isPropertyIllegal(String property){
         if(!property.contains("."))
             return true;
-//        String[] token = property.split("-", 2);
         String[] token = property.split("\\.", 2);
         String conceptName = token[0];
         String value = token[1];
@@ -583,11 +716,16 @@ public class ConfigLoader {
             String[] token = property.split("\\.", 2);
             String conceptName = token[0];
             String value = token[1];
-            return vocabularyList.isIllegalConceptProperty(conceptName, value);
+            var result =  vocabularyList.isIllegalConceptProperty(conceptName, value);
+            if(result){
+                System.out.println("  [Error] Error code: C06");
+                System.out.println("  [WARNING] property '" + property + "' does not exist in exception list.");
+            }
+            return result;
         }else {
             if (!exceptionList.contains(property)) {
-                System.out.println("[Error] Error code: C04");
-                System.out.println("[WARNING] property '" + property + "' does not exist in exception list.");
+                System.out.println("  [Error] Error code: C06");
+                System.out.println("  [WARNING] property '" + property + "' does not exist in exception list.");
                 return true;
             }
             return false;
@@ -599,7 +737,8 @@ public class ConfigLoader {
      * @param raw json string
      * @return true if legal, otherwise false
      */
-    private boolean isValidJsonString(String raw){
+    private static boolean isValidJsonString(String raw){
+        Gson gson = new Gson();
         try{
             gson.fromJson(raw, JsonObject.class);
         }catch (Exception e){

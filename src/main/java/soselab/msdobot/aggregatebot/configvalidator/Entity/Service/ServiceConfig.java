@@ -8,6 +8,10 @@ public class ServiceConfig {
     public String context;
     public ArrayList<ContextConfig> properties;
 
+    public void setProperties(ArrayList<ContextConfig> properties) {
+        this.properties = properties;
+    }
+
     public ServiceConfig(){}
 
     @Override
